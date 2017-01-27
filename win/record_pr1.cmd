@@ -1,0 +1,1 @@
+"C:\Program Files\VideoLAN\VLC\vlc.exe" --intf dummy --sout-file-format http://stream.polskieradio.pl/program1 --sout=#std{access=file,mux=wma,dst="record-pr1_%%Y%%m%%d_%%H%%M%%S.wma"} --mmsh-proxy "http://10.144.1.10:8080" --run-time %1 vlc://quit
