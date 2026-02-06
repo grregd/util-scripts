@@ -1,0 +1,1 @@
+python %~dp0\rename_by_metadata\rename_by_exif_data.py %*
