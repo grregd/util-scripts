@@ -4,18 +4,12 @@ import exifread # https://pypi.org/project/ExifRead/
 import json
 import mimetypes
 import os
-import re
 import subprocess
 
 parser = ArgumentParser()
-
 parser.add_argument("-e", "--execute", action="store_true")
-parser.add_argument("-s", "--suffixes", default="jpg,jpeg,nef,NEF,mp4,avi,mov")
-parser.add_argument("-f", "--file")
-
+parser.add_argument("-w", "--wildcard", default="*")
 args = parser.parse_args()
-
-
 
 
 class MediaFileRenamer:
@@ -68,11 +62,9 @@ class VideoFileRenamer(MediaFileRenamer):
 
 
     def extractMetaData(self, fileInfo):
-        # print("VideoFileRenamer.extractMetaData")
         return self.__class__.getMetadataVideo(fileInfo.name)
 
     def prepareDateString(self, metaData):
-        # print("VideoFileRenamer.prepareDateString")
         datetimeSrc = metaData["format"]["tags"]["creation_time"]
 
         for m in re.finditer(self.__class__.dateTimeRegex, datetimeSrc):
@@ -90,7 +82,6 @@ class ImageFileRenamer(MediaFileRenamer):
 
 
     def extractMetaData(self, fileInfo):
-        # print("ImageFileRenamer.extractMetaData")
         with open(fileInfo, 'rb') as imageFile:
             exifData = exifread.process_file(imageFile, extract_thumbnail=False)
             if len(exifData) == 0:
@@ -100,8 +91,6 @@ class ImageFileRenamer(MediaFileRenamer):
 
 
     def prepareDateString(self, metaData):
-        # print(f"ImageFileRenamer.prepareDateString - {metaData}")
-
         if "Image DateTime" in metaData:
             datetime = f'{metaData["Image DateTime"]}'
         elif "EXIF DateTimeOriginal" in metaData:
@@ -130,18 +119,12 @@ class ImageFileRenamer(MediaFileRenamer):
 
 
 
-suffixes = args.suffixes.replace(',', '|')
-if args.file is None:
-    regex = re.compile(rf".*\.({suffixes})$", re.IGNORECASE)
-else:
-    regex = re.compile(rf"{args.file}")
-
 vren = VideoFileRenamer(args)
 iren = ImageFileRenamer(args)
 
-for fileInfo in Path(".").iterdir():
+filesList = Path(".").glob(args.wildcard)
 
-    if regex.match(fileInfo.name):
+for fileInfo in filesList:
 
         try:
             if MediaFileRenamer.fileType(fileInfo.name) == 'video':
@@ -149,6 +132,10 @@ for fileInfo in Path(".").iterdir():
 
             elif MediaFileRenamer.fileType(fileInfo.name) == 'image':
                 iren.renameFile(fileInfo)
+
+            else:
+                print(f"[WARNING] - {fileInfo.name} - unsupported file type")
+                continue
 
         except Exception as e:
             print(f"[WARNING] - {fileInfo.name} - {type(e).__name__}: {e}")
