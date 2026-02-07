@@ -4,6 +4,7 @@ import exifread # https://pypi.org/project/ExifRead/
 import json
 import mimetypes
 import os
+import re
 import subprocess
 
 parser = ArgumentParser()
