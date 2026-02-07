@@ -51,7 +51,7 @@ class MediaFileRenamer:
 class VideoFileRenamer(MediaFileRenamer):
     datePattern = "(?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})"
     timePattern = "(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})"
-    dateTimePatter = f"{datePattern} {timePattern}"
+    dateTimePatter = f"{datePattern}[T ]{timePattern}"
     dateTimeRegex = re.compile(rf"{dateTimePatter}")
 
     def getMetadataVideo(path):
@@ -60,7 +60,7 @@ class VideoFileRenamer(MediaFileRenamer):
             "-v", "quiet",
             "-print_format", "json",
             "-show_format",
-            "-show_streams",
+            # "-show_streams",
             path
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -100,11 +100,14 @@ class ImageFileRenamer(MediaFileRenamer):
 
 
     def prepareDateString(self, metaData):
-        # print("ImageFileRenamer.prepareDateString")
+        # print(f"ImageFileRenamer.prepareDateString - {metaData}")
 
-        datetime = f'{metaData["Image DateTime"]}'
+        if "Image DateTime" in metaData:
+            datetime = f'{metaData["Image DateTime"]}'
+        elif "EXIF DateTimeOriginal" in metaData:
+            datetime = f'{metaData["EXIF DateTimeOriginal"]}'
+
         datetime_digitized = f'{metaData["EXIF DateTimeDigitized"]}'
-        # datetime_original = f'{exifData["EXIF DateTimeOriginal"]}'
 
         # print(f"datetime          : {myImage.datetime_digitized}")
         # print(f"datetime_digitized: {myImage.datetime_digitized}")
@@ -148,6 +151,6 @@ for fileInfo in Path(".").iterdir():
                 iren.renameFile(fileInfo)
 
         except Exception as e:
-            print(f"[WARNING] - {fileInfo.name} - {e}")
+            print(f"[WARNING] - {fileInfo.name} - {type(e).__name__}: {e}")
             continue
 
